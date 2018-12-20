@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# MIT Licensed #
 
 import os
 import sys
@@ -59,6 +60,20 @@ def run_vault_with_config(profile, filename):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) >= 2 and sys.argv[1] in ("help", "--help", "-h", "-?", "/?"):
+        print(
+            "Usage: aws-dart COMMAND TARGET [args]",
+            "",
+            "  COMMAND - For commands see aws-vault --help",
+            "  TARGET  - Target as defined in your ~/.aws/config",
+            sep="\n",
+        )
+        sys.exit(0)
+
+    if len(sys.argv) < 3:
+        print("Usage: aws-dart COMMAND TARGET [args]", file=sys.stderr)
+        sys.exit(1)
+
     config_file = os.getenv("AWS_CONFIG_FILE", "~/.aws/config")
     config = parse_aws_config(config_file)
 
