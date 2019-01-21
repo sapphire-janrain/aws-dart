@@ -31,6 +31,16 @@ Run the command such as `aws-dart exec dev-us env | grep AWS_REGION`
 
 It will run `aws-vault exec dev env | grep AWS_REGION` but your grep will result in `AWS_REGION=us-east-1` instead of nothing.
 
+You may specify a space separated list of aliases for a single target after the name, as well. For example, if your config file is `~/.aws/config` and your file is defined using this target:
+
+```ini
+[target dev-us du]
+profile = dev
+region = us-east-1
+```
+
+when you run the command `aws-dart exec du cat ~/.aws/config_dev-us` you will see the resulting config (it saves under the primary name).
+
 ## How it works ##
 This generates a new config file containing your **defaults** header and a profile that combines the target with its **profile**. Then it sets the `AWS_CONFIG_FILE` environment variable before running the aws-vault command.
 

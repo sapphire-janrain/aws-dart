@@ -4,6 +4,8 @@
 import os
 import sys
 import subprocess
+from collections import OrderedDict
+
 from botocore import configloader, exceptions
 
 
@@ -13,26 +15,46 @@ def parse_aws_config(filename="~/.aws/config"):
 
 
 def load_target(config, target_name):
-    key = "target {}".format(target_name)
-    if key in config:
-        target = config[key]
+    target_key = None
+    for key in config.keys():
+        if key.startswith("target "):
+            targets = key[7:].split()
+            if target_name in targets:
+                target_key = key
+                fn_key = targets[0]
+                break
+
+    if target_key is not None:
+        target = config[target_key]
         if "profile" not in target:
             raise exceptions.MissingParametersError(object_name=target_name, missing="profile")
 
         profile_name = target.pop("profile")
         if profile_name not in config["profiles"]:
-            raise exceptions.ProfileNotFound(profile_name)
+            raise exceptions.ProfileNotFound(profile=profile_name)
 
-        profile = config["profiles"][profile_name]
-        profile_key = "profile {}".format(profile_name)
-        temporary_config = profile.copy()
-        temporary_config.update(target)
-        temporary_config = { profile_key: temporary_config }
+        temporary_config = OrderedDict()
 
         if "default" in config["profiles"]:
             temporary_config["default"] = config["profiles"]["default"]
 
-        return profile_name, temporary_config
+        profile = config["profiles"][profile_name]
+        if "source_profile" in profile:
+            source_profile_name = profile["source_profile"]
+            if source_profile_name not in config["profiles"]:
+                raise exceptions.ProfileNotFound(source_profile_name)
+
+            source_profile_key = "profile {}".format(source_profile_name)
+            temporary_config[source_profile_key] = config["profiles"][source_profile_name]
+
+        profile_copy = profile.copy()
+        profile_copy.update(target)
+        profile_key = "profile {}".format(profile_name)
+        temporary_config[profile_key] = profile_copy
+
+        return profile_name, fn_key, temporary_config
+    else:
+        raise exceptions.ProfileNotFound(profile=key)
 
 
 def write_config(filename, temporary_config):
@@ -78,9 +100,9 @@ if __name__ == "__main__":
     config = parse_aws_config(config_file)
 
     target_name = sys.argv[2]
-    profile, temporary_config = load_target(config, target_name)
+    profile, real_target_name, temporary_config = load_target(config, target_name)
 
-    filename = "{}_{}".format(config_file, target_name)
+    filename = "{}_{}".format(config_file, real_target_name)
     write_config(filename, temporary_config)
 
     sys.exit(run_vault_with_config(profile, filename))
