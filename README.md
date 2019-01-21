@@ -39,6 +39,6 @@ The new config is written to the same location as the last one but with the targ
 Thus all target names should be filename safe. (It's not like you wanted to quote the argument on the CLI anyway, right?)
 
 ## Installation ##
-Download this and link the `aws-vault.py` file somewhere in a folder in your $PATH
+Download this and link the `aws-dart.py` file somewhere in a folder in your $PATH
 
 On linux I have a user-level bin folder in my $PATH at `~/.local/bin` so I linked it in there with `ln -s ~/src/aws-dart/aws-dart.py ~/.local/bin/aws-dart`
